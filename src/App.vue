@@ -1,8 +1,8 @@
 <template>
   <div id="app">
-    <div>Name</div>
+    <div class="habbitlog">HabbitLog</div>
     <div class="cards-container">
-      <Card v-for="(value, i) in records" :key="i" :habbits="habbits" :index="i" :update-habbits="updateHabbits"/>
+      <Card v-for="(habbit, i) in habbits" :key="i" :habbit="habbit" :index="i" @update-habbits="updateHabbits"/>
     </div>
   </div>
 </template>
@@ -23,20 +23,21 @@ export default {
     }
   },
   created() {
-    this.habbits = [
+    this.habbits = localStorage.getItem('habbits') ? JSON.parse(localStorage.getItem('habbits')) : 
+    [
       {
         name: 'bed 10pm',
-        streak: '010',
+        records: '010',
         color: 'lightgreen'
       },
       {
         name: 'exercise',
-        streak: '111',
+        records: '111',
         color: 'yellow'
       },
       {
         name: '1 hour',
-        streak: '111',
+        records: '111',
         color: 'lightblue'
       }
     ]
@@ -47,8 +48,11 @@ export default {
       }
   },
   methods: {
-      updateHabbits(updatedHabbits) {
+      updateHabbits(updatedHabbit) {
+          let updatedHabbits = this.habbits;
+          updatedHabbits[updatedHabbit.index] = updatedHabbit.newHabbit;
           this.habbits = updatedHabbits;
+          localStorage.setItem('habbits', JSON.stringify(this.habbits));
       }
   }
 }
@@ -63,7 +67,7 @@ html, body {
   height: 100%;
 }
 
-.body {
+body {
   margin: 0;
 }
 
@@ -77,5 +81,11 @@ html, body {
   display: flex;
   flex-wrap: wrap;
   padding: 10px;
+}
+
+.habbitlog {
+  margin: 10px;
+  font-weight: bold;
+  font-size: 30px;
 }
 </style>
