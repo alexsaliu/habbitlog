@@ -2,6 +2,7 @@
   <div class="card">
     <div class="title">{{habbit.name}}</div>
     <div class="card-container" :style="{borderTop: `3px solid ${habbit.color}`}">
+      <div v-if="removeHabbits" @click="$emit('remove', index)" class="remove">x</div>
       <div class="info">
         <div class="streak">streak <span>{{currentStreak}}</span></div>
         <div class="score">total {{habbit.records.length}}</div>
@@ -27,7 +28,8 @@
 export default {
   props: {
     habbit: Object,
-    index: Number
+    index: Number,
+    removeHabbits: Boolean
   },
   data() {
     return {
@@ -79,6 +81,11 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.title {
+    color: grey;
+    padding: 5px;
+}
+
 .card {
     margin: 10px;
 }
@@ -96,6 +103,7 @@ export default {
   border-radius: 5px;
   box-shadow: 2px 2px 10px -3px lightgrey;
   padding: 2px;
+  position: relative;
 }
 
 .item-container {
@@ -126,11 +134,21 @@ export default {
     cursor: pointer;
 }
 
-.done {
-  background: #ffed8f;
-}
-
-.complete {
-  background: #c0fd81;
+.remove {
+    background: red;
+    color: white;
+    width: 16px;
+    height: 16px;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    padding-bottom: 2px;
+    position: absolute;
+    right: -8px;
+    top: -12px;
+    cursor: pointer;
 }
 </style>

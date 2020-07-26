@@ -1,26 +1,28 @@
 <template>
   <div id="app">
     <div class="habbitlog">HabbitLog</div>
-    <div v-if="storedName" class="cards-container">
-      <Card v-for="(habbit, i) in habbits" :key="i" :habbit="habbit" :index="i" @update-habbits="updateHabbits"/>
+    <div v-if="storedName">
+      <div class="name">{{storedName}}</div>
+      <div class="change-name" @click="storedName = false">New Account</div>
+      <div :style="{color: removeHabbits ? 'red' : ''}" class="remove-habbits" @click="removeHabbits = !removeHabbits">Remove Habbits</div>
     </div>
-    <div class="enter-name">
+    <div v-if="storedName" class="cards-container">
+      <Card v-for="(habbit, i) in habbits" :key="i" :habbit="habbit" :removeHabbits="removeHabbits" :index="i" @update-habbits="updateHabbits" @remove="removeHabbit"/>
+      <div v-if="!addingHabbit" @click="addingHabbit = true" class="add-placeholder">
+        Add<span>+</span>
+      </div>
+      <div v-else class="new-habbit">
+        <input v-model="newHabbit" type="text" placeholder="name"/>
+        <div class="colors">
+          <div v-for="(color, i) in colors" :key="i" class="color" @click="selectColor(i)" :style="{border: `2px solid ${color}`, background: color ===  selectedColor ? color : ''}"></div>
+        </div>
+        <button class="add-habbit" @click="addHabbit()">Add habbit</button>
+      </div>
+    </div>
+
+    <div v-if="!storedName" class="enter-name">
       <input v-model="enteredName" type="text" placeholder="name"/>
       <button class="submit-name" @click="submitName()">Submit</button>
-    </div>
-    <div class="select-habbits">
-      <input v-model="newHabbit" type="text" placeholder="name"/>
-      <button class="submit-name" @click="addHabbit()">Submit</button>
-      <div class="colors">
-        <div v-for="(color, i) in colors" :key="i" class="color" @click="selectColor(i)" :style="{border: `2px solid ${color}`, background: color ===  selectedColor ? color : ''}"></div>
-      </div>
-      <div class="new-habbits">
-        <div v-for="(habbit, i) in newHabbits" :key="i" class="habbit">
-          <div class="new-habbit-color" :style="{background: habbit.color}"></div>
-          <div class="name">{{habbit.name}}</div>
-          <div class="remove" @click="removeHabbit(i)">x</div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -37,41 +39,31 @@ export default {
     return {
       habbits: [],
       newHabbits: [],
+      addingHabbit: false,
       storedName: localStorage.getItem('name') ? localStorage.getItem('name') : false,
       enteredName: "",
       newHabbit: "",
       selectedColor: "",
+      removeHabbits: false,
       colors: [
         "lightblue",
         "lightgreen",
-        "pink"
+        "pink",
+        "orange",
+        "mediumpurple",
+        "rosybrown",
+        "indianred",
+        "gold"
       ]
     }
   },
   created() {
-    this.habbits = localStorage.getItem('habbits') ? JSON.parse(localStorage.getItem('habbits')) : 
-    [
-      {
-        name: 'bed 10pm',
-        records: '010',
-        color: 'lightgreen'
-      },
-      {
-        name: 'exercise',
-        records: '111',
-        color: 'yellow'
-      },
-      {
-        name: '1 hour',
-        records: '111',
-        color: 'lightblue'
-      }
-    ]
+    this.habbits = localStorage.getItem('habbits') ? JSON.parse(localStorage.getItem('habbits')) : []
   },
   computed: {
       records: function() {
           return this.habbits[0].streak.length;
-      }
+      },
   },
   methods: {
       updateHabbits(updatedHabbit) {
@@ -82,6 +74,7 @@ export default {
       },
       submitName() {
         if (this.enteredName) {
+          localStorage.setItem('name', this.enteredName);
           // get habbits
           console.log("OK");
           axios.get('https://jsonplaceholder.typicode.com/todos/1')
@@ -91,21 +84,27 @@ export default {
         }
       },
       addHabbit() {
+        if (!this.newHabbit || !this.selectedColor) return;
         let newHabbit = {};
         newHabbit["name"] = this.newHabbit;
+        newHabbit["records"] = '0';
         newHabbit["color"] = this.selectedColor;
-        this.newHabbits = [...this.newHabbits, newHabbit];
+        this.habbits = [...this.habbits, newHabbit];
         this.selectedColor = '';
+        this.enteredName = '';
+        localStorage.setItem('habbits', JSON.stringify(this.habbits));
+        this.addingHabbit = false;
       },
       removeHabbit(index) {
         let habbits = [];
-        for (let i = 0; i < this.newHabbits.length; i++) {
+        for (let i = 0; i < this.habbits.length; i++) {
 
           if (i !== index) {
-            habbits.push(this.newHabbits[i]);
+            habbits.push(this.habbits[i]);
           }
         }
-        this.newHabbits = habbits;
+        this.habbits = habbits;
+        localStorage.setItem('habbits', JSON.stringify(this.habbits));
       },
       selectColor(i) {
         this.selectedColor = this.colors[i];
@@ -145,6 +144,14 @@ body {
   font-size: 30px;
   display: inline-block;
 }
+
+button, a {
+  cursor: pointer;
+}
+
+button:focus {
+  outline: none;
+}
 </style>
 
 <style scoped>
@@ -169,15 +176,18 @@ body {
 }
 
 .color {
-    width: 40px;
-    height: 40px;
-    margin: 5px;
+    width: 20%;
+    height: 15px;
+    margin: 2px;
     cursor: pointer;
 }
 
 .colors {
     display: flex;
     justify-content: center;
+    width: 100%;
+    flex-wrap: wrap;
+    margin: 5px 0;
 }
 
 .habbit {
@@ -195,26 +205,50 @@ body {
     margin-left: 5px;
 }
 
-.remove {
-    font-size: 12px;
+.new-habbit {
+    width: 150px;
+    margin: 10px;
+    margin-top: 38px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+    box-shadow: 2px 2px 10px -3px lightgrey;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.new-habbit input {
+    border: 1px solid lightgrey;
+    border-radius: 5px;
+    padding: 2px;
+    text-align: center;
+}
+
+.add-habbit {
+    background: #3b3b3b;
     color: white;
-    background: #d93232;
-    border-radius: 100px;
-    padding: 0 1px 1px 0;
-    height: 15px;
-    width: 15px;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+
+.add-placeholder {
+    margin-top: 38px;
+    width: 150px;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: absolute;
-    right: -8px;
-    top: -5px;
+    border: 3px solid #f8f8f8;
+    color: #dbdbdb;
+    height: 50px;
+    border-radius: 5px;
+    font-size: 20px;
     cursor: pointer;
 }
 
-.new-habbit-color {
-    height: 20px;
-    width: 20px;
-    border-radius: 100px;
+.add-placeholder span {
+  font-size: 26px;
+  margin-left: 5px;
 }
 </style>
